@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1001928408196",
+    "project_id": "skg-app-402f8",
+    "storage_bucket": "skg-app-402f8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001928408196:android:2625d2c55e704660e5d6d1",
+        "android_client_info": {
+          "package_name": "de.skg_botnang.skg_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ4FRHfZF_udUFAyQY5q6sbK9WnQQn1Zw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

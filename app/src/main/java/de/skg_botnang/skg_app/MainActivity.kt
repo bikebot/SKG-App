@@ -1,5 +1,9 @@
 package de.skg_botnang.skg_app
 
+// https://firebase.blog/posts/2023/08/adding-fcm-to-jetpack-compose-app/
+// https://github.com/firebase/quickstart-android/tree/master/messaging/app
+// https://github.com/FirebaseExtended/make-it-so-android/tree/main/start/app/src/main/java/com/example/makeitso
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent

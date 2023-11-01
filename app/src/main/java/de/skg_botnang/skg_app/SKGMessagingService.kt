@@ -9,10 +9,12 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
 import android.os.Build
 import android.util.Log
-// import androidx.compose.material.ExperimentalMaterialApi
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class SKGMessagingService : FirebaseMessagingService() {
@@ -22,6 +24,20 @@ class SKGMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         remoteMessage.notification?.let { message ->
             sendNotification(message)
+        }
+
+        storeMessageLocally(FCMMessage(
+            title = remoteMessage.notification?.title ?: "",
+            body = remoteMessage.notification?.body ?: ""
+        ))
+    }
+
+    private fun storeMessageLocally(message: FCMMessage) {
+        val database = FCMDatabase.getDatabase(applicationContext)
+        val messageDao = database.messageDao()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            messageDao.insertMessage(message)
         }
     }
 

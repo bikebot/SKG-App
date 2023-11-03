@@ -46,5 +46,8 @@ interface FCMMessageDao {
     suspend fun getAllMessages(): List<FCMMessage>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMessage(message: FCMMessage)
+    suspend fun insertMessage(message: FCMMessage): Long
+
+    @Query("SELECT * FROM FCMMessage WHERE id =:id")
+    fun get(id: Long): FCMMessage
 }

@@ -1,5 +1,7 @@
 package de.skg_botnang.skg_app
 
+// https://firebase.google.com/docs/cloud-messaging/android/client?hl=en
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_DEFAULT
@@ -7,7 +9,6 @@ import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -26,10 +27,12 @@ class SKGMessagingService : FirebaseMessagingService() {
             sendNotification(message)
         }
 
-        storeMessageLocally(FCMMessage(
+        val fcmMessage = FCMMessage(
             title = remoteMessage.notification?.title ?: "",
             body = remoteMessage.notification?.body ?: ""
-        ))
+        )
+        storeMessageLocally(fcmMessage)
+
     }
 
     private fun storeMessageLocally(message: FCMMessage) {
@@ -37,11 +40,18 @@ class SKGMessagingService : FirebaseMessagingService() {
         val messageDao = database.messageDao()
 
         CoroutineScope(Dispatchers.IO).launch {
-            messageDao.insertMessage(message)
+            val rowID: Long = messageDao.insertMessage(message)
+            Log.d(TAG, "message.id = ${rowID}")
+            notifyActivity(rowID)
         }
     }
 
-    // @OptIn(ExperimentalMaterialApi::class)
+    private fun notifyActivity(id: Long) {
+        sendBroadcast(Intent("NOTIFY_FCM").apply {
+            putExtra("rowID", id)
+        })
+    }
+
     private fun sendNotification(message: RemoteMessage.Notification) {
         // If you want the notifications to appear when your app is in foreground
 
@@ -64,10 +74,8 @@ class SKGMessagingService : FirebaseMessagingService() {
 
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, CHANNEL_NAME, IMPORTANCE_DEFAULT)
-            manager.createNotificationChannel(channel)
-        }
+        val channel = NotificationChannel(channelId, CHANNEL_NAME, IMPORTANCE_DEFAULT)
+        manager.createNotificationChannel(channel)
 
         manager.notify(random.nextInt(), notificationBuilder.build())
     }
@@ -76,10 +84,11 @@ class SKGMessagingService : FirebaseMessagingService() {
         // If you want to send messages to this application instance or
         // manage this apps subscriptions on the server side, send the
         // FCM registration token to your app server.
-        Log.d("FCM","New token: $token")
+        Log.d(TAG,"New token: $token")
     }
 
     companion object {
         const val CHANNEL_NAME = "FCM notification channel"
+        const val TAG = "SKG-App"
     }
 }

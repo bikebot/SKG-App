@@ -4,8 +4,8 @@ plugins {
 
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
-    kotlin("kapt")
     id("androidx.room") version "2.6.0"
+    kotlin("kapt")
 }
 
 android {

@@ -21,9 +21,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import de.skg_botnang.skg_app.ui.theme.SKGAppTheme
 import kotlinx.coroutines.CoroutineScope
@@ -32,8 +31,17 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    val messages = mutableStateListOf(
+        FCMMessage(
+        0,
+        "Wasserschaden",
+        "Die Fußballumkleide steht unter Wasser"
+        )
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             SKGAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -41,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MessageList()
+                    MessageList(messages)
                 }
             }
         }
@@ -79,14 +87,24 @@ class MainActivity : ComponentActivity() {
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if ("NOTIFY_FCM" == intent?.action) {
+            Log.d(TAG, "broadcastReceiver: action = ${intent?.action}")
+            if ("de.skg_botnang.skg_app.NOTIFY_FCM" == intent?.action) {
                 val id = intent.getLongExtra("rowID", -1)
+                Log.d(TAG, "broadcastReceiver: id = $id")
                 val database = FCMDatabase.getDatabase(applicationContext)
                 val messageDao = database.messageDao()
                 // Handle the received data
                 CoroutineScope(Dispatchers.IO).launch {
-                    val message = messageDao.get(id)
-                    Log.d(TAG, "Message found: $message")
+                    val msg = messageDao.get(id)
+                    messages.add(0, msg)
+                    Log.d(TAG, "Message found: $msg")
+                    runOnUiThread {
+                        Toast.makeText(
+                            applicationContext,
+                            msg.title + "\n" + msg.body,
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
             }
         }
@@ -95,19 +113,20 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onStart() {
         super.onStart()
-        registerReceiver(broadcastReceiver, IntentFilter("NOTIFY_FCM"))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiver, IntentFilter("de.skg_botnang.skg_app.NOTIFY_FCM"), RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiver, IntentFilter("de.skg_botnang.skg_app.NOTIFY_FCM"))
+        }
     }
 
     override fun onStop() {
         super.onStop()
         unregisterReceiver(broadcastReceiver)
     }
-
-    companion object {
-        const val TAG = "SKG-App"
-    }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun MessagePreview() {
@@ -115,3 +134,6 @@ fun MessagePreview() {
         MessageList()
     }
 }
+*/
+
+val TAG = "SKG-App"

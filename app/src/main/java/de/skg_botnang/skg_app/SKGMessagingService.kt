@@ -47,7 +47,8 @@ class SKGMessagingService : FirebaseMessagingService() {
     }
 
     private fun notifyActivity(id: Long) {
-        sendBroadcast(Intent("NOTIFY_FCM").apply {
+        sendBroadcast(Intent("de.skg_botnang.skg_app.NOTIFY_FCM").apply {
+            setPackage(getPackageName())
             putExtra("rowID", id)
         })
     }
@@ -68,7 +69,7 @@ class SKGMessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(message.title)
             .setContentText(message.body)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.mipmap.ic_skg_round)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 

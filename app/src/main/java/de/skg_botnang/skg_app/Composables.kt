@@ -3,9 +3,12 @@ package de.skg_botnang.skg_app
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
@@ -15,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -24,11 +28,16 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun MessageList() {
-    var message: FCMMessage by remember { mutableStateOf(FCMMessage(0, "Titel1", "Body1")) }
+fun MessageList(messages: SnapshotStateList<FCMMessage>) {
+    // var message: FCMMessage by remember { mutableStateOf(FCMMessage(0, "Titel1", "Body1")) }
+    val listState = rememberLazyListState()
     Column() {
         Clock()
-        MessageCard(message)
+        LazyColumn(state=listState) {
+            items(messages, key={ it.id }) {
+                MessageCard(it)
+            }
+        }
     }
 }
 
@@ -54,20 +63,11 @@ fun Clock() {
 @Composable
 fun MessageCard(message: FCMMessage) {
     Card(
-        modifier= Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 40.dp)
-            .padding(horizontal = 12.dp, vertical = 12.dp)
-            /*
-                        .pointerInput(Unit) {
-                            detectTapGestures(onLongPress = {
-                                taskModel.edited = !taskModel.edited
-                            })
-                        }
-            */
-            // .clickable(onClick = { navController.navigate("settings/${taskModel.task.ID}") })
-            ,
-        shape= RoundedCornerShape(8.dp)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        shape= RoundedCornerShape(8.dp),
         // Using state in compose:
         // https://developer.android.com/codelabs/jetpack-compose-state?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fcompose%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fjetpack-compose-state
     ) {
@@ -77,7 +77,7 @@ fun MessageCard(message: FCMMessage) {
                 .heightIn(min = 40.dp)
         ) {
             Text(message.title, fontSize=20.sp)
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(message.body)
         }
     }

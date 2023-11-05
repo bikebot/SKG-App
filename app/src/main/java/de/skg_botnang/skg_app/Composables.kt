@@ -29,9 +29,8 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun MessageList(messages: SnapshotStateList<FCMMessage>) {
-    // var message: FCMMessage by remember { mutableStateOf(FCMMessage(0, "Titel1", "Body1")) }
     val listState = rememberLazyListState()
-    Column() {
+    Column {
         Clock()
         LazyColumn(state=listState) {
             items(messages, key={ it.id }) {
@@ -77,6 +76,10 @@ fun MessageCard(message: FCMMessage) {
                 .heightIn(min = 40.dp)
         ) {
             Text(message.title, fontSize=20.sp)
+            Text(
+                DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm").format(message.time),
+                fontSize=12.sp
+            )
             Spacer(modifier = Modifier.height(6.dp))
             Text(message.body)
         }

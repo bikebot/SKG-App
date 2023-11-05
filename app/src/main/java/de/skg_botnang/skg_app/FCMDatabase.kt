@@ -10,12 +10,37 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+object Converters {
+    @TypeConverter
+    @JvmStatic
+    fun stringToZonedDateTime(isoString: String?): ZonedDateTime? {
+        return isoString?.let {
+            ZonedDateTime.parse(it, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        }
+    }
+
+    @TypeConverter
+    @JvmStatic
+    fun zonedDateTimeToISOString(zonedDateTime: ZonedDateTime?): String? {
+        return zonedDateTime?.let {
+            DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(it)
+        }
+    }
+}
+
 
 @Entity
+@TypeConverters(Converters::class)
 data class FCMMessage(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
-    val body: String
+    val body: String,
+    val time: ZonedDateTime = ZonedDateTime.now()
 )
 
 @Database(entities = [FCMMessage::class], version = 1)
@@ -44,6 +69,9 @@ abstract class FCMDatabase : RoomDatabase() {
 interface FCMMessageDao {
     @Query("SELECT * FROM FCMMessage")
     suspend fun getAllMessages(): List<FCMMessage>
+
+    @Query("SELECT * FROM FCMMessage ORDER BY time DESC LIMIT :n")
+    suspend fun getSome(n: Int): List<FCMMessage>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: FCMMessage): Long

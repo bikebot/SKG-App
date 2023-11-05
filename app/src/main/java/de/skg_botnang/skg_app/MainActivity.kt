@@ -21,7 +21,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import de.skg_botnang.skg_app.ui.theme.SKGAppTheme
@@ -29,18 +28,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
 class MainActivity : ComponentActivity() {
 
-    val messages = mutableStateListOf(
-        FCMMessage(
-        0,
-        "Wasserschaden",
-        "Die Fußballumkleide steht unter Wasser"
-        )
-    )
+    lateinit var viewModel: MessagesViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d(TAG, "MainActivity: onCreate")
         super.onCreate(savedInstanceState)
+
+        viewModel = MessagesViewModel(
+            FCMDatabase.getDatabase(applicationContext).messageDao()
+        )
 
         setContent {
             SKGAppTheme {
@@ -49,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MessageList(messages)
+                    MessageList(viewModel.messages)
                 }
             }
         }
@@ -96,7 +95,7 @@ class MainActivity : ComponentActivity() {
                 // Handle the received data
                 CoroutineScope(Dispatchers.IO).launch {
                     val msg = messageDao.get(id)
-                    messages.add(0, msg)
+                    viewModel.messages.add(0, msg)
                     Log.d(TAG, "Message found: $msg")
                     runOnUiThread {
                         Toast.makeText(
@@ -124,6 +123,11 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         unregisterReceiver(broadcastReceiver)
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "MainActivity: onDestroy")
+    }
 }
 
 /*
@@ -136,4 +140,4 @@ fun MessagePreview() {
 }
 */
 
-val TAG = "SKG-App"
+const val TAG = "SKG-App"

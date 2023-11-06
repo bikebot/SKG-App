@@ -37,10 +37,10 @@ object Converters {
 @Entity
 @TypeConverters(Converters::class)
 data class FCMMessage(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
     val body: String,
-    val time: ZonedDateTime = ZonedDateTime.now()
+    val time: ZonedDateTime = ZonedDateTime.now(),
+    @PrimaryKey(autoGenerate = true) val id: Long = 0
 )
 
 @Database(entities = [FCMMessage::class], version = 1)
@@ -68,14 +68,14 @@ abstract class FCMDatabase : RoomDatabase() {
 @Dao
 interface FCMMessageDao {
     @Query("SELECT * FROM FCMMessage")
-    suspend fun getAllMessages(): List<FCMMessage>
+    suspend fun getAll(): List<FCMMessage>
 
     @Query("SELECT * FROM FCMMessage ORDER BY time DESC LIMIT :n")
     suspend fun getSome(n: Int): List<FCMMessage>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMessage(message: FCMMessage): Long
-
     @Query("SELECT * FROM FCMMessage WHERE id =:id")
     fun get(id: Long): FCMMessage
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(message: FCMMessage): Long
 }

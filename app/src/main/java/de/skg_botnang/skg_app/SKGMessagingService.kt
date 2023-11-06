@@ -40,7 +40,7 @@ class SKGMessagingService : FirebaseMessagingService() {
         val messageDao = database.messageDao()
 
         CoroutineScope(Dispatchers.IO).launch {
-            val rowID: Long = messageDao.insertMessage(message)
+            val rowID: Long = messageDao.insert(message)
             Log.d(TAG, "message.id = ${rowID}")
             notifyActivity(rowID)
         }
@@ -48,7 +48,7 @@ class SKGMessagingService : FirebaseMessagingService() {
 
     private fun notifyActivity(id: Long) {
         sendBroadcast(Intent("de.skg_botnang.skg_app.NOTIFY_FCM").apply {
-            setPackage(getPackageName())
+            setPackage(getPackageName())    // required for Android 14
             putExtra("rowID", id)
         })
     }

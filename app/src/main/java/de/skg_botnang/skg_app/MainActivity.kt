@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,18 +29,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-
 class MainActivity : ComponentActivity() {
 
-    lateinit var viewModel: MessagesViewModel
+    val viewModel: MessagesViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "MainActivity: onCreate")
         super.onCreate(savedInstanceState)
 
-        viewModel = MessagesViewModel(
-            FCMDatabase.getDatabase(applicationContext).messageDao()
-        )
+        // applicationContext is only available in onCreate
+        viewModel.readFromDb(FCMDatabase.getDatabase(applicationContext).messageDao())
 
         setContent {
             SKGAppTheme {
@@ -48,7 +47,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MessageList(viewModel.messages)
+                    MessageList(viewModel.messages, debugAction = { debugMakeMesssage() })
                 }
             }
         }
@@ -109,6 +108,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun debugMakeMesssage() {
+        val database = FCMDatabase.getDatabase(applicationContext)
+        val messageDao = database.messageDao()
+        // Handle the received data
+        CoroutineScope(Dispatchers.IO).launch {
+            // We need to update the object after inserting it to obtain db auto-generated
+            // values, e.g., the id
+            val msg = messageDao.get(messageDao.insert(FCMMessage(
+                "Debug ${debugMsgNum++}",
+                "This message was created by a button click."
+            )))
+            viewModel.messages.add(0, msg)
+            Log.d(TAG, "Debug message made: $msg")
+            runOnUiThread {
+                Toast.makeText(
+                    applicationContext,
+                    msg.title + "\n" + msg.body,
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
+
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onStart() {
         super.onStart()
@@ -127,6 +149,10 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "MainActivity: onDestroy")
+    }
+
+    companion object {
+        private var debugMsgNum = 0
     }
 }
 

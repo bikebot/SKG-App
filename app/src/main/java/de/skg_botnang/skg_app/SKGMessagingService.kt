@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.res.ResourcesCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -69,12 +70,12 @@ class SKGMessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(message.title)
             .setContentText(message.body)
-            .setSmallIcon(R.mipmap.ic_skg_round)
+            .setSmallIcon(R.drawable.ic_notification_skg)
+            .setColor(ResourcesCompat.getColor(getResources(), R.color.ic_skg_red_background, null))
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
         val channel = NotificationChannel(channelId, CHANNEL_NAME, IMPORTANCE_DEFAULT)
         manager.createNotificationChannel(channel)
 

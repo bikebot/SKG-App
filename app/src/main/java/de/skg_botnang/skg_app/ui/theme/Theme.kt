@@ -16,15 +16,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val darkColorScheme_ = darkColorScheme(
+private val skgDarkColorScheme = darkColorScheme(
     primary = PRIMARY,
     onPrimary = ON_PRIMARY,
     secondary = PurpleGrey80,
     tertiary = Pink80,
-    primaryContainer = Color(0xFF333333)
+    primaryContainer = Color(0xFF333333),
+    surfaceVariant = Color(0xFF110000)
 )
 
-private val lightColorScheme_ = lightColorScheme(
+private val skgLightColorScheme = lightColorScheme(
     primary = PRIMARY,
     onPrimary = ON_PRIMARY,
     secondary = PurpleGrey40,
@@ -54,14 +55,14 @@ fun SKGAppTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> darkColorScheme_
-        else -> lightColorScheme_
+        darkTheme -> skgDarkColorScheme
+        else -> skgLightColorScheme
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor =  colorScheme.primary.toArgb() // Color.Red.toArgb()
+            window.statusBarColor =  colorScheme.surfaceVariant.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }

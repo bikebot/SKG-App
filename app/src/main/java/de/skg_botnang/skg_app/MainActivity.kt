@@ -40,17 +40,7 @@ class MainActivity : ComponentActivity() {
         // applicationContext is only available in onCreate
         viewModel.readFromDb(FCMDatabase.getDatabase(applicationContext).messageDao())
 
-        setContent {
-            SKGAppTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MessageList(viewModel.messages, debugAction = { debugMakeMesssage() })
-                }
-            }
-        }
+        setContent { MainComposable(viewModel, { debugMakeMesssage() }) }
         askNotificationPermission()
     }
 

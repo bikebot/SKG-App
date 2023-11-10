@@ -106,4 +106,6 @@ dependencies {
     room {
         schemaDirectory("$projectDir/schemas/")
     }
+
+    // implementation("com.google.accompanist:accompanist-webview:<version>")
 }

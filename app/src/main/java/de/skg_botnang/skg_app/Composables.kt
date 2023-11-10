@@ -10,32 +10,41 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +55,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -56,56 +68,104 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-enum class ScreenShown { NOTIFICATIONS, HOMEPAGE }
+data class TabDescr(
+    val label: String,
+    val icon: ImageVector,
+    val composable: @Composable () -> Unit
+)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainComposable(viewModel: MessagesViewModel, debugAction: () -> Unit) {
-    var currentScreen by remember { mutableStateOf(ScreenShown.NOTIFICATIONS) }
+    val pagerState = rememberPagerState(initialPage = 0) {2}
+    val scope = rememberCoroutineScope()
+    val tabs = listOf(
+        TabDescr("Nachrichten", Icons.Default.Notifications) {
+            MessageList(viewModel.messages, debugAction = debugAction)
+        },
+        TabDescr("Homepage", Icons.Default.Home) { Homepage() }
+    )
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     SKGAppTheme {
         Scaffold(
-//            modifier = Modifier.fillMaxSize(),
-//            color = MaterialTheme.colorScheme.background
             topBar = {
-                CenterAlignedTopAppBar(
+                TopAppBar(
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     title = { Text("SKG-App") },
+
                     actions = {
-                        IconButton(onClick = { currentScreen = ScreenShown.NOTIFICATIONS }) {
+                        IconButton(
+                            modifier = Modifier.background(Color.Black),
+                            onClick = {
+                            scope.launch { pagerState.animateScrollToPage(0) }
+                        }) {
                             Icon(Icons.Default.Notifications, contentDescription = null)
                         }
-                       IconButton(onClick = { currentScreen = ScreenShown.HOMEPAGE }) {
+                        IconButton(
+                            modifier = Modifier.background(Color.Blue),
+                            onClick = {
+                            scope.launch { pagerState.animateScrollToPage(1) }
+                        }) {
                             Icon(Icons.Default.Home, contentDescription = null)
                         }
-                    }
+                    },
+                    scrollBehavior = scrollBehavior
                 )
-            }
+            },
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         ) { innerPadding ->
-            when (currentScreen) {
-                ScreenShown.NOTIFICATIONS -> MessageList(innerPadding, viewModel.messages, debugAction = debugAction)
-                ScreenShown.HOMEPAGE      -> Homepage(innerPadding)
+            Column(modifier = Modifier.padding(innerPadding)) {
+                TabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                            height = 2.dp,
+                            color = Color.White
+                        )
+                    }
+                ) {
+                    tabs.forEachIndexed { page, tabDescr ->
+                        Tab(
+                            icon = { Icon(tabDescr.icon, contentDescription = null) },
+                            text = { Text(tabDescr.label,
+                                color = if (pagerState.currentPage == page)
+                                    Color.White else Color.LightGray
+                            )},
+                            selected = pagerState.currentPage == page,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            }
+                        )
+                    }
+                }
+                HorizontalPager(
+                    state = pagerState,
+                    beyondBoundsPageCount = 1
+                ) { page -> tabs[page].composable() }
+
             }
-        }
+         }
     }
 }
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun MessageList(padding: PaddingValues, messages: SnapshotStateList<FCMMessage>, debugAction: () -> Unit) {
+fun MessageList(messages: SnapshotStateList<FCMMessage>, debugAction: () -> Unit) {
     val listState = rememberLazyListState()
     val previousFirstMsg: FCMMessage? = remember { messages.getOrNull(0) }
     val coroutineScope = rememberCoroutineScope()
 
     Log.d("AAA", "Composing MessageList")
     Column(
-        modifier = Modifier
-            .padding(padding)
-            .padding(8.dp),
+        modifier = Modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row {
@@ -181,7 +241,7 @@ fun MessageCard(message: FCMMessage) {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun Homepage (padding: PaddingValues) {
+fun Homepage () {
     val mUrl = "https://www.skg-botnang.de"
     var backEnabled by remember { mutableStateOf(false) }
     // var webView by remember { mutableStateOf<WebView?>(null) }
@@ -195,7 +255,6 @@ fun Homepage (padding: PaddingValues) {
     // Adding a WebView inside AndroidView
     // with layout as full screen
     AndroidView(
-        modifier = Modifier.padding(padding),
         factory = {
             Log.d("AAA", "Making WebView")
             WebView(it).apply {
@@ -242,18 +301,42 @@ fun Homepage (padding: PaddingValues) {
     }
 }
 
-
-/*
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
 @Composable
-fun Homepage () {
-    val webViewState = rememberWebViewState(url = url)
-    WebView(
-        // modifier = modifier,
-        state = webViewState,
-        captureBackPresses = true,
-        onCreated = { it : WebView ->
-            it.settings.javaScriptEnabled = true
+fun Test() {
+    SKGAppTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    title = { Text("SKG-App") },
+
+                    actions = {
+                        IconButton(
+                            modifier = Modifier.background(Color.Black),
+                            onClick = { }
+                        ) {
+                            Icon(Icons.Default.Notifications, contentDescription = null)
+                        }
+                        IconButton(
+                            modifier = Modifier.background(Color.Blue),
+                            onClick = {}
+                        ) {
+                            Icon(Icons.Default.Home, contentDescription = null)
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            Column(modifier = Modifier.padding(innerPadding)) {
+                Text("Hallo")
+                Text("Hallo")
+                Text("Hallo")
+            }
         }
-    )
+    }
 }
-*/

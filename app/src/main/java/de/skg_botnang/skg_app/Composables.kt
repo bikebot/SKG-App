@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -53,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,6 +67,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import de.skg_botnang.skg_app.ui.theme.skgLightColorScheme
 
 data class TabDescr(
     val label: String,
@@ -126,29 +127,28 @@ fun MainComposable(viewModel: MessagesViewModel, debugAction: () -> Unit) {
                         TabRowDefaults.Indicator(
                             modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
                             height = 2.dp,
-                            color = Color.White
+                            // color = Color.White
                         )
                     }
                 ) {
                     tabs.forEachIndexed { page, tabDescr ->
                         Tab(
                             icon = { Icon(tabDescr.icon, contentDescription = null) },
-                            text = { Text(tabDescr.label,
-                                color = if (pagerState.currentPage == page)
-                                    Color.White else Color.LightGray
-                            )},
+                            text = { Text(tabDescr.label) },
                             selected = pagerState.currentPage == page,
                             onClick = {
                                 scope.launch {
                                     pagerState.animateScrollToPage(page)
                                 }
-                            }
+                            },
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 HorizontalPager(
                     state = pagerState,
-                    beyondBoundsPageCount = 1
+                    beyondBoundsPageCount = 1,
+                    verticalAlignment = Alignment.Top
                 ) { page -> tabs[page].composable() }
 
             }
@@ -168,7 +168,9 @@ fun MessageList(messages: SnapshotStateList<FCMMessage>, debugAction: () -> Unit
         modifier = Modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Clock()
             Button(onClick = debugAction) {
                 Text("Debug Make Message")
@@ -239,6 +241,32 @@ fun MessageCard(message: FCMMessage) {
     }
 }
 
+@Preview
+@Composable
+fun TestDarkCard() {
+    val msg = remember { FCMMessage("Überschrift", "Dies ist ein Preview einer MessageCard") }
+
+    SKGAppTheme(darkTheme = true)  {
+        MessageCard(message = msg)
+    }
+}
+
+@Preview
+@Composable
+fun TestLightCard() {
+    val msg = remember { FCMMessage("Überschrift", "Dies ist ein Preview einer MessageCard") }
+
+    SKGAppTheme(darkTheme = false)  {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+                .background(skgLightColorScheme.background)
+        ) {
+            MessageCard(message = msg)
+        }
+    }
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun Homepage () {
@@ -271,7 +299,7 @@ fun Homepage () {
                         activity ?: return false
                         //val host = Uri.parse(request.url.toString()).host
                         val host = request.url.host
-                        if (host != null && host.endsWith("skg-botnang.de", ignoreCase = true)) {
+                        if (host != null && host.endsWith("""skg-botnang.de""", ignoreCase = true)) {
                             // This is your website, so don't override. Let your WebView load
                             // the page.
                             Log.d(TAG, "OverrideUrlLoading: returning false")
@@ -301,6 +329,7 @@ fun Homepage () {
     }
 }
 
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
@@ -339,4 +368,4 @@ fun Test() {
             }
         }
     }
-}
+}*/

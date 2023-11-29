@@ -12,17 +12,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val skgDarkColorScheme = darkColorScheme(
-    primary = DarkRed,
+    primary = Red,
     onPrimary = Color.White,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    primaryContainer = DarkGrey,
-    surfaceVariant = DarkGrey  // used for Cards
+    secondary = Green,
+    onSecondary = Color.White,
+    tertiary = DarkRed,
+    onTertiary = Color.White
+//    primaryContainer = DarkGrey,
+//    surfaceVariant = DarkGrey  // used for Cards
 )
 
 val skgLightColorScheme = lightColorScheme(
-    primary = DarkRed,
  /*
+    primary = DarkRed,
     onPrimary = ON_PRIMARY,
     secondary = PurpleGrey40,
     tertiary = Pink40,

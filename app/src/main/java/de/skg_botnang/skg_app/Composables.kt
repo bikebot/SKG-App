@@ -58,16 +58,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import de.skg_botnang.skg_app.ui.theme.SKGAppTheme
+import de.skg_botnang.skg_app.ui.theme.skgLightColorScheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import de.skg_botnang.skg_app.ui.theme.skgLightColorScheme
 
 data class TabDescr(
     val label: String,
@@ -219,8 +221,7 @@ fun MessageCard(message: FCMMessage) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 40.dp)
-            //.padding(horizontal = 0.dp, vertical = 0.dp
-        ,
+            .semantics { contentDescription = "MessageCard" },
         shape= RoundedCornerShape(8.dp),
         // Using state in compose:
         // https://developer.android.com/codelabs/jetpack-compose-state?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fcompose%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fjetpack-compose-state

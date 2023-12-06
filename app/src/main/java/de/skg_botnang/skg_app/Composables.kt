@@ -260,8 +260,7 @@ fun TestLightCard() {
     SKGAppTheme(darkTheme = false)  {
         Column(
             modifier = Modifier
-                .padding(8.dp)
-                .background(skgLightColorScheme.background)
+                .padding(0.dp)
         ) {
             MessageCard(message = msg)
         }

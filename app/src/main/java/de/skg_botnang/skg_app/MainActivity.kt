@@ -35,7 +35,10 @@ class MainActivity : ComponentActivity() {
         // applicationContext is only available in onCreate
         viewModel.readFromDb(FCMDatabase.getDatabase(applicationContext).messageDao())
 
-        setContent { MainComposable(viewModel, { debugMakeMesssage() }) }
+        setContent {
+            // MainComposable(viewModel, { debugMakeMesssage() })
+            FavoritesScreen()
+        }
         askNotificationPermission()
     }
 

@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             // MainComposable(viewModel, { debugMakeMesssage() })
-            FavoritesScreen()
+            LayoutTestScreen()
         }
         askNotificationPermission()
     }

@@ -1,15 +1,16 @@
 package de.skg_botnang.skg_app
 
 import android.util.Log
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateOffsetAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,15 +30,17 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import de.skg_botnang.skg_app.ui.theme.SKGAppTheme
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
-@Preview
 @Composable
 fun TestAnima() {
     var offp: Boolean by remember { mutableStateOf(false) }
@@ -97,14 +101,16 @@ fun Circle(num: Int, itemSize: Dp) {
 @Preview
 @Composable
 fun LayoutTestScreen() {
-    val numItems = 7
+    val numItems = 1
     val itemSize = 70.dp
     val minSpacing = 20.dp
     val coordinates = remember { List(numItems) { mutableStateOf<LayoutCoordinates?>(null) } }
     val highlights = remember { List(numItems) { mutableStateOf(false) } }
 
     SKGAppTheme(darkTheme = true) {
-        RowsWithEqualItems(numItems = numItems, itemSize = itemSize, minSpacing = minSpacing)
+        // RowsWithEqualItems(numItems = numItems, itemSize = itemSize, spacing = minSpacing)
+        CirclesLayout40(numItems, itemSize, minSpacing)
+        // CirclesLayout35(numItems, itemSize, minSpacing, 320.dp)
     }
 }
 
@@ -116,12 +122,7 @@ infix fun Int.ceilDiv(b: Int): Int {
 
 
 @Composable
-fun RowsWithEqualItems(numItems: Int, itemSize: Dp, minSpacing: Dp) {
-    val sizePlusSpacing = with (LocalDensity.current) {
-        (itemSize + minSpacing).roundToPx()
-    }
-    val itemSizePx = with (LocalDensity.current) { itemSize.roundToPx() }
-    val spacingPx = with (LocalDensity.current) { minSpacing.roundToPx() }
+fun RowsWithEqualItems(numItems: Int, itemSize: Dp, spacing: Dp) {
     Layout(
         modifier = Modifier.fillMaxWidth(),
         content = {
@@ -131,12 +132,13 @@ fun RowsWithEqualItems(numItems: Int, itemSize: Dp, minSpacing: Dp) {
         val constraints1 = constraints.copy(minWidth = 0, minHeight = 0)
         val placeables = measurables.map { it.measure(constraints1) }
         val width = constraints.maxWidth
-        val maxItemsPerRow = width / sizePlusSpacing
+        val sizePlusSpacing = itemSize.roundToPx() + spacing.roundToPx()
+        val maxItemsPerRow = (width + spacing.roundToPx()) / sizePlusSpacing
         val rows = placeables.size ceilDiv maxItemsPerRow
         val itemsPerRow = placeables.size ceilDiv rows
         var leftMargin =
-            (width - itemsPerRow * sizePlusSpacing + spacingPx) / 2
-        val height = rows * sizePlusSpacing + 2 * leftMargin - spacingPx
+            (width + spacing.roundToPx() - itemsPerRow * sizePlusSpacing) / 2
+        val height = rows * sizePlusSpacing + 2 * leftMargin - spacing.roundToPx()
 
         layout(width, height) {
             var currentY = leftMargin
@@ -159,7 +161,7 @@ fun RowsWithEqualItems(numItems: Int, itemSize: Dp, minSpacing: Dp) {
                     val currentRow = index / itemsPerRow + 1 // 1-based
                     if (currentRow == rows - 1) {
                         val itemsInLastRow = placeables.size - (rows - 1) * itemsPerRow
-                        leftMargin = (width - itemsInLastRow * sizePlusSpacing + spacingPx) / 2
+                        leftMargin = (width - itemsInLastRow * sizePlusSpacing + spacing.roundToPx()) / 2
                     }
                 }
             }
@@ -174,10 +176,10 @@ fun RowsWithEqualItems(numItems: Int, itemSize: Dp, minSpacing: Dp) {
 // Use the minimum necessary number of rows. Distribute the circles as equally as possible into the
 // rows. The circles shall be spaced by a specific distance and they shall be centered in their
 // row. The circles are to produced with this composable function: Circle...
-
+//
 // Rewrite CirclesLayout using the Layout composable instead of Column.
 @Composable
-fun CirclesLayout(totalCircles: Int, itemSize: Dp, spacing: Dp) {
+fun CirclesLayout40(totalCircles: Int, itemSize: Dp, spacing: Dp) {
     Layout(
         content = {
             for (i in 0 until totalCircles) {
@@ -186,10 +188,16 @@ fun CirclesLayout(totalCircles: Int, itemSize: Dp, spacing: Dp) {
         }
     ) { measurables, constraints ->
         // Calculate the maximum number of circles per row based on the screen width
-        val maxCirclesPerRow = ((constraints.maxWidth - spacing.roundToPx()) / (itemSize.toPx() + spacing.toPx())).toInt()
+        val maxCirclesPerRow =
+            ((constraints.maxWidth - spacing.roundToPx()) / (itemSize.toPx() + spacing.toPx())).toInt()
+        //** Nicht korrekt. Korrekt wäre + statt -, da das Spacing für den letzen Item nicht benötigt wird.
+        val maxCirclesPerRowCorrected =
+            ((constraints.maxWidth + spacing.roundToPx()) / (itemSize.toPx() + spacing.toPx())).toInt()
 
         // Define the size of each item
-        val itemConstraints = constraints.copy(minWidth = itemSize.roundToPx(), minHeight = itemSize.roundToPx())
+        val itemConstraints =
+            constraints.copy(minWidth = itemSize.roundToPx(), minHeight = itemSize.roundToPx()-1)
+        //** Rounding error: minHeight=193, maxHeight=192
 
         // Measure each child
         val placeables = measurables.map { measurable ->
@@ -200,13 +208,16 @@ fun CirclesLayout(totalCircles: Int, itemSize: Dp, spacing: Dp) {
         val numRows = ceil(totalCircles.toFloat() / maxCirclesPerRow).toInt()
         val layoutWidth = constraints.maxWidth
         val layoutHeight = (itemSize.toPx() * numRows + spacing.toPx() * (numRows - 1)).toInt()
+        //** Korrekt aber nicht schön. Besser wäre eine zusätzliche Marge oben und unten
 
         // Define the layout
         layout(layoutWidth, layoutHeight) {
             var yPosition = 0
 
             placeables.chunked(maxCirclesPerRow).forEach { row ->
-                var xPosition = (layoutWidth - (row.size * itemSize.toPx() + (row.size - 1) * spacing.toPx())) / 2f
+                //** Hier wird der Startwert für die Zentrierung berechnet. Gut!
+                var xPosition =
+                    (layoutWidth - (row.size * itemSize.toPx() + (row.size - 1) * spacing.toPx())) / 2f
 
                 row.forEach { placeable ->
                     placeable.placeRelative(x = xPosition.roundToInt(), y = yPosition)
@@ -214,6 +225,80 @@ fun CirclesLayout(totalCircles: Int, itemSize: Dp, spacing: Dp) {
                 }
 
                 yPosition += itemSize.roundToPx() + spacing.roundToPx()
+            }
+        }
+    }
+}
+
+
+// Solution of ChatGPT 3.5
+// Zahlreiche Fehler. Funktioniert so nicht.
+
+@Composable
+fun CirclesLayout35(circleCount: Int, itemSize: Dp, rowSpacing: Dp, availableWidth: Dp) {
+    val circlesPerRow = max(1, (availableWidth / (itemSize + rowSpacing)).toInt())
+    val rows = (circleCount + circlesPerRow - 1) / circlesPerRow // Calculate the number of rows
+
+    Layout(
+        content = {
+            for (rowIndex in 0 until rows) {
+                val start = rowIndex * circlesPerRow
+                val end = min(start + circlesPerRow, circleCount)
+
+                val row = (start until end).map { num ->
+                    key(num) {
+                        Circle(num = num, itemSize = itemSize)
+                    }
+                }
+
+                // row.forEach { composable -> composable() }
+                //** Fehler
+
+                if (rowIndex < rows - 1) {
+                    Spacer(modifier = Modifier.height(rowSpacing))
+                }
+            }
+        }
+    ) { measurables, constraints ->
+        val rowWidths = IntArray(rows) { 0 }
+        val rowHeights = IntArray(rows) { 0 }
+
+        for (i in 0 until rows) {
+            val start = i * circlesPerRow
+            val end = min(start + circlesPerRow, circleCount)
+
+            for (j in start until end) {
+                val placeable = measurables[j].measure(constraints)
+                //** Mehrfache Berechnung der Größe derselben Composables
+                rowWidths[i] += placeable.width
+                rowHeights[i] = max(rowHeights[i], placeable.height)
+            }
+
+            if (i < rows - 1) {
+                rowHeights[i] += rowSpacing.roundToPx() //** .toIntPx() gibt es nicht
+            }
+        }
+
+        val width = rowWidths.maxOrNull()?.coerceIn(constraints.minWidth, constraints.maxWidth)
+            ?: constraints.minWidth
+        val height = rowHeights.sumBy { it }.coerceIn(constraints.minHeight, constraints.maxHeight)
+
+        layout(width, height) {
+            var currentX = 0
+            var currentY = 0
+
+            for (i in 0 until rows) {
+                val rowWidth = rowWidths[i]
+                for (j in 0 until circlesPerRow) {
+                    if (j + i * circlesPerRow >= circleCount) break
+                    val placeable = measurables[j + i * circlesPerRow].measure(constraints)
+                    val xPos = currentX + (rowWidth - placeable.width) / 2
+                    val yPos = currentY
+                    placeable.place(x = xPos, y = yPos)
+                    currentX += rowWidth
+                }
+                currentX = 0
+                currentY += rowHeights[i]
             }
         }
     }
